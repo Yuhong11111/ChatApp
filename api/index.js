@@ -6,6 +6,7 @@ require('dotenv').config();
 const User = require('./models/User.js');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
+const ws = require('ws');
 
 // console.log(process.env.MONGO_URL);
 
@@ -85,8 +86,34 @@ app.post('/register', async (req, res) => {
     })
 });
 
-app.listen(3000, () => {
+const server = app.listen(3000, () => {
   console.log('Server is running on port 3000');
+});
+
+const wss = new ws.WebSocketServer({ server });
+wss.on('connection', (connection,req) => {
+  // wss.clients.forEach(client => client.send('new user connected'));
+  const cookies = req.headers.cookie;
+  if(cookies) {
+    const tokenCookieString = cookies.split(';').find(str => str.startsWith('token='));
+    if(tokenCookieString) {
+      const token = tokenCookieString.split('=')[1];
+      if(token) {
+        jwt.verify(token, jwt_screte, {}, (err, userData) => {
+          if(err) throw err;
+          const { userId, username } = userData;
+          connection.userId = userId;
+          connection.username = username;
+        });
+      }
+    }
+  }
+
+  [...wss.clients].forEach(client => {
+    client.send(JSON.stringify(
+      [...wss.clients].map(c => ({userId: c.userId, username: c.username}))
+    ))
+  })
 });
 
 //3bA2mzebz7prQoFs
