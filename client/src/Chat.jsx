@@ -48,18 +48,26 @@ export default function Chat() {
             <div className="bg-white w-1/3">
                 <Logo />
                 {Object.keys(onlinePeopleExculedMyself).map(userId => (
-                    <div key={userId} onClick={() => setSelectedUserId(userId)} className={"border-b border-gray-100 flex items-center py-2  p-2 gap-2 cursor-pointer "
+                    <div key={userId} onClick={() => setSelectedUserId(userId)} className={"border-b border-gray-100 flex items-center gap-2 cursor-pointer "
                         + (userId === selectedUserId ? 'bg-blue-50' : '')}>
                         {userId === selectedUserId && (
-                            <div className="w-1 bg-blue-500 h-12"></div>
+                            <div className="w-1 bg-blue-500 h-12 rounded-r-md"></div>
                         )}
-                        <Avatar username={onlinePeople[userId]} userID={userId} ></Avatar>
-                        <span className="text-grey-800">{onlinePeople[userId]}</span>
+                        <div className="flex gap-2 py-2  p-2 items-center">
+                            <Avatar username={onlinePeople[userId]} userID={userId} ></Avatar>
+                            <span className="text-grey-800">{onlinePeople[userId]}</span>
+                        </div>
                     </div>
                 ))}
             </div>
             <div className="flex flex-col bg-blue-50 w-2/3 p-2">
-                <div className="flex-grow">message with selected person</div>
+                <div className="flex-grow">
+                    {!selectedUserId && (
+                        <div className="h-full flex items-center justify-center">
+                            <div className="text-gray-300">&larr; Select a person to chat with</div>
+                        </div>
+                    )}
+                </div>
                 <div className="flex gap-2 mx-2">
                     <input type="text"
                         placeholder="type your message here"
