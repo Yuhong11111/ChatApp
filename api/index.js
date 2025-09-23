@@ -75,7 +75,7 @@ app.post('/register', async (req, res) => {
       username:username, 
       password: bcrypt.hashSync(password), salt });
     // Create a JWT token with the user’s ID inside
-    jwt.sign({userId:createdUser._id},// payload (what’s inside the token)
+    jwt.sign({userId:createdUser._id, username: createdUser.username},// payload (what’s inside the token)
         jwt_screte,// secret key (used to sign)
         (err, token) => {
         if(err) throw err;
