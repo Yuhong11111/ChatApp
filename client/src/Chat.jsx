@@ -55,7 +55,12 @@ export default function Chat() {
             text: newMessageText,
         }))
         setNewMessageText('');
-        setMessages(prev => [...prev, { text: newMessageText, sender: id, recipient: selectedUserId }]);
+        setMessages(prev => [...prev, {
+            text: newMessageText,
+            sender: id,
+            recipient: selectedUserId,
+            id: Date.now(),
+        }]);
     }
 
     return (
@@ -83,12 +88,16 @@ export default function Chat() {
                         </div>
                     )}
                     {!!selectedUserId && (
-                        <div>
-                            {messagesWithoutDupes.map(message => (
-                                <div className={"p-2 " + (message.sender === id ? 'bg-blue-500 text-white text-right' : 'bg-white text-gray-500 text-left')} key={message.id}>
-                                    {message.sender === id ? 'ME:' : ''}{message.text}
-                                </div>
-                            ))}
+                        <div className="relative h-full">
+                            <div className="overflow-y-scroll absolute inset-0">
+                                {messagesWithoutDupes.map(message => (
+                                    <div className={(message.sender === id ? 'text-right' : 'text-left')}>
+                                        <div className={"text-left inline-block p-2 m-2 rounded-md text-sm " + (message.sender === id ? 'bg-blue-500 text-white' : 'bg-white text-gray-500')} key={message.id}>
+                                            {message.text}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>
