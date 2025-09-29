@@ -1,5 +1,5 @@
-import { useEffect } from "react"
-import { useState, useContext } from "react"
+import { use, useEffect } from "react"
+import { useState, useContext, useRef } from "react"
 import Avatar from "./avatar";
 import Logo from "./Logo";
 import { UserContext } from "./UserContext";
@@ -16,6 +16,7 @@ export default function Chat() {
     const onlinePeopleExculedMyself = { ...onlinePeople };
     delete onlinePeopleExculedMyself[id];
     const messagesWithoutDupes = uniqBy(messages, 'id');
+    const divUnderMessages = useRef(null);
 
     useEffect(() => {
         const ws = new WebSocket('ws://localhost:3000');
@@ -63,6 +64,12 @@ export default function Chat() {
         }]);
     }
 
+    useEffect(() => {
+        if (divUnderMessages.current) {
+            divUnderMessages.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+    }, [messagesWithoutDupes]);
+
     return (
         <div className="flex h-screen">
             <div className="bg-white w-1/3">
@@ -89,7 +96,7 @@ export default function Chat() {
                     )}
                     {!!selectedUserId && (
                         <div className="relative h-full">
-                            <div className="overflow-y-scroll absolute inset-0">
+                            <div className="overflow-y-scroll absolute top-0 left-0 right-0 bottom-2">
                                 {messagesWithoutDupes.map(message => (
                                     <div className={(message.sender === id ? 'text-right' : 'text-left')}>
                                         <div className={"text-left inline-block p-2 m-2 rounded-md text-sm " + (message.sender === id ? 'bg-blue-500 text-white' : 'bg-white text-gray-500')} key={message.id}>
@@ -97,8 +104,10 @@ export default function Chat() {
                                         </div>
                                     </div>
                                 ))}
+                                <div ref={divUnderMessages}></div>
                             </div>
                         </div>
+
                     )}
                 </div>
                 {!!selectedUserId && (
