@@ -3,6 +3,7 @@ import { useState, useContext } from "react"
 import Avatar from "./avatar";
 import Logo from "./Logo";
 import { UserContext } from "./UserContext";
+import { uniqBy } from "lodash";
 // import { set } from "mongoose";
 
 export default function Chat() {
@@ -10,9 +11,11 @@ export default function Chat() {
     const [onlinePeople, setOnlinePeople] = useState({});
     const [selectedUserId, setSelectedUserId] = useState(null);
     const { username, id } = useContext(UserContext);
-
+    const [newMessageText, setNewMessageText] = useState('');
+    const [messages, setMessages] = useState([]);
     const onlinePeopleExculedMyself = { ...onlinePeople };
     delete onlinePeopleExculedMyself[id];
+    const messagesWithoutDupes = uniqBy(messages, 'id');
 
     useEffect(() => {
         const ws = new WebSocket('ws://localhost:3000');
@@ -22,15 +25,6 @@ export default function Chat() {
         //     ws.close();
         // }
     }, [])
-
-    function handleMessage(ev) {
-        const message = JSON.parse(ev.data);
-        if ('online' in message) {
-            showOnlinePeople(message.online);
-        } else if ('text' in message) {
-            showMessage(message);
-        }
-    }
 
     function showOnlinePeople(peopleArray) {
         const people = {};
@@ -43,6 +37,27 @@ export default function Chat() {
     function showMessage(message) {
         console.log(message);
     }
+
+    function handleMessage(ev) {
+        const messageData = JSON.parse(ev.data);
+        console.log({ ev, messageData });
+        if ('online' in messageData) {
+            showOnlinePeople(messageData.online);
+        } else if ('text' in messageData) {
+            setMessages(prev => ([...prev, { ...messageData }]));
+        }
+    }
+
+    function sendMessage(ev) {
+        ev.preventDefault();
+        ws.send(JSON.stringify({
+            recipient: selectedUserId,
+            text: newMessageText,
+        }))
+        setNewMessageText('');
+        setMessages(prev => [...prev, { text: newMessageText, sender: id, recipient: selectedUserId }]);
+    }
+
     return (
         <div className="flex h-screen">
             <div className="bg-white w-1/3">
@@ -67,17 +82,30 @@ export default function Chat() {
                             <div className="text-gray-300">&larr; Select a person to chat with</div>
                         </div>
                     )}
+                    {!!selectedUserId && (
+                        <div>
+                            {messagesWithoutDupes.map(message => (
+                                <div className={"p-2 " + (message.sender === id ? 'bg-blue-500 text-white text-right' : 'bg-white text-gray-500 text-left')} key={message.id}>
+                                    {message.sender === id ? 'ME:' : ''}{message.text}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
-                <div className="flex gap-2 mx-2">
-                    <input type="text"
-                        placeholder="type your message here"
-                        className="w-bg-white flex-grow border round p-2" />
-                    <button className="bg-blue-500 p-2 text-white rounded-md ml-2">
-                        <svg xmls="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-                        </svg>
-                    </button>
-                </div>
+                {!!selectedUserId && (
+                    <form className="flex gap-2 mx-2" onSubmit={sendMessage}>
+                        <input type="text"
+                            value={newMessageText}
+                            onChange={ev => setNewMessageText(ev.target.value)}
+                            placeholder="type your message here"
+                            className="w-bg-white flex-grow border round p-2" />
+                        <button type="submit" className="bg-blue-500 p-2 text-white rounded-md ml-2">
+                            <svg xmls="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                            </svg>
+                        </button>
+                    </form>
+                )}
             </div>
         </div >
     )

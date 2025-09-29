@@ -4,6 +4,7 @@ const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const User = require('./models/User.js');
+const Message = require('./models/Message.js');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const ws = require('ws');
@@ -93,6 +94,7 @@ const server = app.listen(3000, () => {
 const wss = new ws.WebSocketServer({ server });
 wss.on('connection', (connection,req) => {
   // wss.clients.forEach(client => client.send('new user connected'));
+  // read username and id from the cookie (after the connection is established)
   const cookies = req.headers.cookie;
   if(cookies) {
     const tokenCookieString = cookies.split(';').find(str => str.startsWith('token='));
@@ -109,6 +111,25 @@ wss.on('connection', (connection,req) => {
     }
   }
 
+  connection.on('message', async (message) => {
+    console.log('message received: ' + message);
+    const messageData = JSON.parse(message);
+    const { recipient, text } = messageData;
+    if(recipient && text) {
+      const messageDoc = await Message.create({ sender: connection.userId, recipient, text });
+      // send the message to the recipient if he is online
+      [...wss.clients]
+        .filter(c => c.userId === recipient)
+        .forEach(c => c.send(JSON.stringify({
+          text: text,
+          sender: connection.userId,
+          id: messageDoc._id,
+          recipient,
+        })))
+    }
+  });
+
+  // Notify all clients about the updated online users list
   [...wss.clients].forEach(client => {
     client.send(JSON.stringify({
       online: [...wss.clients].map(c => ({userId: c.userId, username: c.username})),
