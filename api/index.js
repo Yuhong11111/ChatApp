@@ -30,8 +30,33 @@ app.use(cors({
   credentials: true                 // allow cookies (if using JWT in cookies)
 }));
 
+async function getUserDataFromRequest(req) {
+    return new Promise((resolve, reject) => {
+        const token  = req.cookies?.token;
+        if(token){
+            jwt.verify(token, jwt_screte, {}, (err, userData) => {
+                if(err) throw err;
+                resolve(userData);
+            });
+        } else {
+            reject('no token');
+        }
+    });
+}
+
 app.get('/test', (req, res) => {
   res.json('Hello from the backend!' );
+});
+
+app.get('/messages/:userId', async (req, res) => {
+    const { userId } = req.params;
+    const {userData} = await getUserDataFromRequest(req);
+    const ourUserId = userData.userId;
+    const messages = await Message.find({
+      sender:{$in:[userId,ourUserId]},
+      recipient:{$in:[userId,ourUserId]},
+    }).sort({createdAt: 1});
+    res.json(messages);       
 });
 
 app.get('/profile', (req, res) => {

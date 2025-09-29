@@ -70,6 +70,13 @@ export default function Chat() {
         }
     }, [messagesWithoutDupes]);
 
+    useEffect(() => {
+        if (selectedUserId) {
+            // axios.get('/messages/' + selectedUserId).then(res => {
+            //     setMessages(res.data)});
+        }
+    }, [selectedUserId]);
+
     return (
         <div className="flex h-screen">
             <div className="bg-white w-1/3">
