@@ -50,7 +50,7 @@ app.get('/test', (req, res) => {
 
 app.get('/messages/:userId', async (req, res) => {
     const { userId } = req.params;
-    const {userData} = await getUserDataFromRequest(req);
+    const userData = await getUserDataFromRequest(req);
     const ourUserId = userData.userId;
     const messages = await Message.find({
       sender:{$in:[userId,ourUserId]},
@@ -137,7 +137,7 @@ wss.on('connection', (connection,req) => {
   }
 
   connection.on('message', async (message) => {
-    console.log('message received: ' + message);
+    // console.log('message received: ' + message);
     const messageData = JSON.parse(message);
     const { recipient, text } = messageData;
     if(recipient && text) {
