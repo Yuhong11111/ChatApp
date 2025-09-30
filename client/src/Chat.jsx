@@ -5,11 +5,13 @@ import Logo from "./Logo";
 import { UserContext } from "./UserContext";
 import { uniqBy } from "lodash";
 import axios from "axios";
+import Contact from "./Contact";
 // import { set } from "mongoose";
 
 export default function Chat() {
     const [ws, setWs] = useState(null);
     const [onlinePeople, setOnlinePeople] = useState({});
+    const [offlinePeople, setOfflinePeople] = useState({});
     const [selectedUserId, setSelectedUserId] = useState(null);
     const { username, id } = useContext(UserContext);
     const [newMessageText, setNewMessageText] = useState('');
@@ -86,21 +88,42 @@ export default function Chat() {
         }
     }, [selectedUserId]);
 
+    useEffect(() => {
+        axios.get('/people').then(res => {
+            const offlinePeopleArr = res.data
+                .filter(p => p._id !== id)
+                .filter(p => !Object.keys(onlinePeople).includes(p._id))
+
+            const offlinePeople = {};
+            offlinePeopleArr.forEach(p => {
+                offlinePeople[p._id] = p;
+            })
+            setOfflinePeople(offlinePeople);
+        })
+    }, [onlinePeople]);
+    console.log("chat username:", username);
+
     return (
         <div className="flex h-screen">
             <div className="bg-white w-1/3">
                 <Logo />
                 {Object.keys(onlinePeopleExculedMyself).map(userId => (
-                    <div key={userId} onClick={() => setSelectedUserId(userId)} className={"border-b border-gray-100 flex items-center gap-2 cursor-pointer "
-                        + (userId === selectedUserId ? 'bg-blue-50' : '')}>
-                        {userId === selectedUserId && (
-                            <div className="w-1 bg-blue-500 h-12 rounded-r-md"></div>
-                        )}
-                        <div className="flex gap-2 py-2  p-2 items-center">
-                            <Avatar username={onlinePeople[userId]} userID={userId} ></Avatar>
-                            <span className="text-grey-800">{onlinePeople[userId]}</span>
-                        </div>
-                    </div>
+                    <Contact
+                        key={userId}
+                        id={userId}
+                        username={onlinePeopleExculedMyself[userId]}
+                        onClick={() => setSelectedUserId(userId)}
+                        selected={userId === selectedUserId}
+                        online={true} />
+                ))}
+                {Object.keys(offlinePeople).map(userId => (
+                    <Contact
+                        key={userId}
+                        id={userId}
+                        username={offlinePeople[userId].username}
+                        onClick={() => setSelectedUserId(userId)}
+                        selected={userId === selectedUserId}
+                        online={false} />
                 ))}
             </div>
             <div className="flex flex-col bg-blue-50 w-2/3 p-2">
