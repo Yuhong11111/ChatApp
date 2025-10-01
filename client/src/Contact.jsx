@@ -1,7 +1,7 @@
 import Avatar from "./avatar"
 
 export default function Contact({ id, onClick, username, selected, online }) {
-    console.log("Contact username:", username);
+    // console.log("Contact username:", username);
     return (
         <div key={id} onClick={() => onClick(id)}
             className={"border-b border-gray-100 flex items-center gap-2 cursor-pointer "

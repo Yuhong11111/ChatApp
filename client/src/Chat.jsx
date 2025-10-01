@@ -101,7 +101,7 @@ export default function Chat() {
             setOfflinePeople(offlinePeople);
         })
     }, [onlinePeople]);
-    console.log("chat username:", username);
+    // console.log("chat username:", username);
 
     return (
         <div className="flex h-screen">

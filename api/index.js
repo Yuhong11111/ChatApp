@@ -123,6 +123,20 @@ const server = app.listen(3000, () => {
 
 const wss = new ws.WebSocketServer({ server });
 wss.on('connection', (connection,req) => {
+
+  connection.isAlive = true;
+  connection.timer = setInterval(() => {
+    connection.ping();
+    connection.deathTimer = setTimeout(() => {
+      connection.isAlive = false;
+      connection.terminate();
+      notifyAboutOnlinePeople();
+    })
+  },5000 );
+
+  connection.on('pong', () => {
+    connection.deathTimer && clearTimeout(connection.deathTimer);
+  }, 5000);
   // wss.clients.forEach(client => client.send('new user connected'));
   // read username and id from the cookie (after the connection is established)
   const cookies = req.headers.cookie;
@@ -160,12 +174,18 @@ wss.on('connection', (connection,req) => {
   });
 
   // Notify all clients about the updated online users list
-  [...wss.clients].forEach(client => {
-    client.send(JSON.stringify({
-      online: [...wss.clients].map(c => ({userId: c.userId, username: c.username})),
-    }
-    ))
-  })
+  function notifyAboutOnlinePeople() {
+    [...wss.clients].forEach(client => {
+      client.send(JSON.stringify({
+        online: [...wss.clients]
+          .filter(c => c.userId)
+          .map(c => ({ userId: c.userId, username: c.username })),
+      }));
+    });
+  }
+  notifyAboutOnlinePeople();
 });
 
-//3bA2mzebz7prQoFs
+wss.on('close', () => {
+  console.log('WebSocket server closed');
+});
