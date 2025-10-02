@@ -100,6 +100,10 @@ app.post('/login', async (req, res) => {
   }
 });
 
+app.post('/logout', (req, res) => {
+    res.cookie('token', '', {sameSite:'none', secure:true}).json('ok');
+});
+
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
     const createdUser = await User.create({ 
@@ -131,7 +135,7 @@ wss.on('connection', (connection,req) => {
       connection.isAlive = false;
       connection.terminate();
       notifyAboutOnlinePeople();
-    })
+    },10000);
   },5000 );
 
   connection.on('pong', () => {
@@ -186,6 +190,6 @@ wss.on('connection', (connection,req) => {
   notifyAboutOnlinePeople();
 });
 
-wss.on('close', () => {
-  console.log('WebSocket server closed');
-});
+// wss.on('close', () => {
+//   console.log('WebSocket server closed');
+// });
